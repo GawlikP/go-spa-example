@@ -6,6 +6,7 @@ services:
       - .env
     environment:
       - DB_HOST=db
+      - DB_TEST_HOST=testdb
     tty: true
     build:
       context: .
@@ -31,6 +32,26 @@ services:
       - db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT"]
+      interval: 2s
+      retries: 3
+      start_period: 2s
+    networks:
+      - app-network
+  testdb:
+    container_name: testdb
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=${DB_TEST_USER}
+      - POSTGRES_PASSWORD=${DB_TEST_PASS}
+      - POSTGRES_DB=${DB_TEST_NAME}
+      - PGPORT=${DB_TEST_PORT}
+      - TEST_MODEL_DB=${TEST_MODEL_DB}
+    ports:
+      - "${DB_TEST_PORT}:${DB_TEST_PORT}"
+    volumes:
+      - ./test-database-dataset:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_TEST_USER -d $DB_TEST_NAME -h $DB_TEST_HOST -p $DB_TEST_PORT"]
       interval: 2s
       retries: 3
       start_period: 2s
