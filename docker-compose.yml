@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  app:
+    container_name: app
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+  db:
+    container_name: db
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+      - PGPORT=${DB_PORT}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT"]
+      interval: 2s
+      retries: 3
+      start_period: 2s
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+networks:
+  app-network:
+    driver: bridge
+
