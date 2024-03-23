@@ -7,3 +7,13 @@ const AddUsersQuerry = `
   RETURNING
   id, email, password, nickname, created_at, updated_at
 `
+
+const FindUserByEmailAndNickname = `
+  SELECT id
+  FROM users
+  WHERE
+  users.email = $1
+  OR
+  users.nickname = $2
+  LIMIT 1
+`
