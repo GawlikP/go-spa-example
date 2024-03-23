@@ -3,9 +3,10 @@ package model
 import (
   "database/sql"
   "log"
-  "github.com/GawlikP/go-spa-example/pkg/query"
   "errors"
   "regexp"
+  "github.com/GawlikP/go-spa-example/pkg/query"
+  "github.com/GawlikP/go-spa-example/pkg/util"
 )
 
 type User struct {
@@ -18,6 +19,7 @@ type User struct {
 }
 
 const emailRegex = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+
 func CreateUser(db *sql.DB, user User) (User, error) {
   var err error
   var newUser User
@@ -28,6 +30,7 @@ func CreateUser(db *sql.DB, user User) (User, error) {
     return User{}, err
   }
   log.Print("Creating a new user")
+  user.Password = util.CreatePasswordHash(user.Password)
   row := db.QueryRow(query.AddUsersQuerry, user.Email, user.Password, user.Nickname)
   err = row.Scan(&newUser.ID, &newUser.Email, &newUser.Password, &newUser.Nickname, &newUser.CreatedAt, &newUser.UpdatedAt)
   if err != nil {
@@ -36,6 +39,38 @@ func CreateUser(db *sql.DB, user User) (User, error) {
     return User{}, err
   }
   return newUser, nil
+}
+
+func FindUser(db *sql.DB, id int) (User, error) {
+  var err error
+  var newUser User
+  
+  log.Print("Fetching an user")
+  row := db.QueryRow(query.FindUserById, id)
+  err = row.Scan(&newUser.ID, &newUser.Email, &newUser.Nickname, &newUser.Password, &newUser.CreatedAt, &newUser.UpdatedAt)
+  if err != nil {
+    log.Print(err)
+    log.Print("There was an issue durning finding an user")
+    return User{}, err
+  }
+
+  return newUser, nil
+}
+
+func CheckUserPassword(db *sql.DB, userID int, password string) error {
+  var err error
+  var user User
+  row := db.QueryRow(query.FindUserById, userID)
+  err = row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+  if err != nil {
+    log.Print(err)
+    log.Print("There was an issue durning finding an user")
+    return err
+  }
+  if user.Password == util.CreatePasswordHash(password) {
+    return nil
+  }
+  return errors.New("Provided passowrd does not match the user")
 }
 
 func findUserByEmailNick(db *sql.DB, user User) (int, error) {

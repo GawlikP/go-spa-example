@@ -17,3 +17,10 @@ const FindUserByEmailAndNickname = `
   users.nickname = $2
   LIMIT 1
 `
+
+const FindUserById = `
+  SELECT *
+  FROM users
+  WHERE
+  users.id = $1
+`
