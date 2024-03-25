@@ -1,6 +1,6 @@
 package query
 
-const AddUsersQuerry = `
+const AddUser = `
   INSERT INTO users
   (email, password, nickname)
   VALUES ($1, $2, $3)
@@ -9,7 +9,7 @@ const AddUsersQuerry = `
 `
 
 const FindUserByEmailAndNickname = `
-  SELECT id
+  SELECT *
   FROM users
   WHERE
   users.email = $1
@@ -18,7 +18,7 @@ const FindUserByEmailAndNickname = `
   LIMIT 1
 `
 
-const FindUserById = `
+const FindUser = `
   SELECT *
   FROM users
   WHERE

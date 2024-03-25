@@ -3,7 +3,6 @@ package model
 import (
   "testing"
   "github.com/GawlikP/go-spa-example/pkg/db"
-  "github.com/GawlikP/go-spa-example/pkg/util"
   "time"
   "os"
   "strings"
@@ -11,7 +10,7 @@ import (
 
 const timeLayout = time.RFC3339
 
-func TestCreateUser(t *testing.T) {
+func TestUserModel(t *testing.T) {
   conn := db.CreateTestConnection(os.Getenv("TEST_MODEL_DB"))
   defer conn.Close()
   db.MigrateUP(conn, "file://../../migrations")
@@ -21,7 +20,7 @@ func TestCreateUser(t *testing.T) {
       ID: 1,
       Nickname: "nick",
       Email: "test@mail.com",
-      Password: "test",
+      Password: "test1234",
     }
     user, err := CreateUser(conn, expectedUser)
     if err != nil {
@@ -83,13 +82,13 @@ func TestCreateUser(t *testing.T) {
     validateUserWithExpected(user, User{}, t)
   })
 
-  t.Run("#CreateUser should not create an user with invalid  nickname", func(t *testing.T){
+  t.Run("#CreateUser should not create an user with invalid nickname", func(t *testing.T){
     var err error
     var user User
     invalidUser := User{
       Nickname: "",
       Email: "test4@mail.com",
-      Password: "test",
+      Password: "test1234",
     }
     user, err = CreateUser(conn, invalidUser)
     if err == nil {
@@ -138,7 +137,7 @@ func TestCreateUser(t *testing.T) {
     userToFind, err := CreateUser(conn, User{
       Nickname: "nickusertofind",
       Email: "nickusertofind@mail.com",
-      Password: "pass",
+      Password: "pass1234",
     })
     if err != nil {
       t.Errorf("Cannot create user to find, err: %v", err)
@@ -148,7 +147,7 @@ func TestCreateUser(t *testing.T) {
       t.Errorf("#FindUser method has returned an error while finding a valid user: %v", err)
     }
     // we want a password to match, not the paswords hash
-    userToFind.Password = "pass"
+    userToFind.Password = "pass1234"
     validateUserWithExpected(foundUser, userToFind, t)
   })
 
@@ -181,7 +180,7 @@ func TestCreateUser(t *testing.T) {
     userToFind, err := CreateUser(conn, User{
       Nickname: "invaliduserpassword",
       Email: "invaliduserpassword@mail.com",
-      Password: "pass",
+      Password: "pass12345",
     })
     if err != nil {
       t.Errorf("Cannot create user to find, err: %v", err)
@@ -205,12 +204,10 @@ func validateUserWithExpected(received, expected User, t *testing.T)  {
     t.Errorf("User Emails does not match, got %v want %v", received.Email, expected.Email)
   }
   if expected.Password != "" {
-    t.Log("Password Profided")
-    if received.Password != util.CreatePasswordHash(expected.Password) {
+    if received.Password != EncryptPassword(expected.Password) {
       t.Errorf("User Passwords does not match, got %v want %v", received.Password, expected.Password)
     }
   } else {
-    t.Log("Password not provided")
     if received.Password != expected.Password {
       t.Errorf("User Passwords does not match, got %v want %v", received.Password, expected.Password)
     }

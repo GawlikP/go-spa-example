@@ -3,12 +3,14 @@ package model
 import (
   "database/sql"
   "log"
+  "github.com/GawlikP/go-spa-example/pkg/query"
   "errors"
   "regexp"
-  "github.com/GawlikP/go-spa-example/pkg/query"
-  "github.com/GawlikP/go-spa-example/pkg/util"
+  "os"
+  "encoding/hex"
+  "crypto/sha512"
+  "fmt"
 )
-
 type User struct {
   ID        int    `json:"id"`
   Email     string `json:"email"`
@@ -18,108 +20,105 @@ type User struct {
   UpdatedAt string `json:"updated_at"`
 }
 
-const emailRegex = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+type UserError struct {
+  Err error
+}
+
+func (e *UserError) Error() string {
+  return e.Err.Error()
+}
+
+const emailRegex = `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`
 
 func CreateUser(db *sql.DB, user User) (User, error) {
   var err error
   var newUser User
-  log.Print("Validating a new User")
-  err = validateUser(db, user)
+  log.Print("Validating user")
+  err = validateUser(db, user, false)
   if err != nil {
-    log.Print("User validation failed!")
+    log.Print(err)
     return User{}, err
   }
   log.Print("Creating a new user")
-  user.Password = util.CreatePasswordHash(user.Password)
-  row := db.QueryRow(query.AddUsersQuerry, user.Email, user.Password, user.Nickname)
+  user.Password = EncryptPassword(user.Password)
+  row := db.QueryRow(query.AddUser, user.Email, user.Password, user.Nickname)
   err = row.Scan(&newUser.ID, &newUser.Email, &newUser.Password, &newUser.Nickname, &newUser.CreatedAt, &newUser.UpdatedAt)
   if err != nil {
     log.Print(err)
-    log.Print("There was an issue durning creating a user")
+    log.Print("There was an issue during creating a user")
     return User{}, err
   }
   return newUser, nil
 }
 
 func FindUser(db *sql.DB, id int) (User, error) {
-  var err error
-  var newUser User
-  
-  log.Print("Fetching an user")
-  row := db.QueryRow(query.FindUserById, id)
-  err = row.Scan(&newUser.ID, &newUser.Email, &newUser.Nickname, &newUser.Password, &newUser.CreatedAt, &newUser.UpdatedAt)
+  var user User
+  row := db.QueryRow(query.FindUser, id)
+  err := row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password, &user.CreatedAt, &user.UpdatedAt)
   if err != nil {
-    log.Print(err)
-    log.Print("There was an issue durning finding an user")
     return User{}, err
   }
-
-  return newUser, nil
+  return user, nil
 }
 
-func CheckUserPassword(db *sql.DB, userID int, password string) error {
-  var err error
+func CheckUserPassword(db *sql.DB, id int, password string) error {
   var user User
-  row := db.QueryRow(query.FindUserById, userID)
-  err = row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+  row := db.QueryRow(query.FindUser, id)
+  err := row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password, &user.CreatedAt, &user.UpdatedAt)
   if err != nil {
-    log.Print(err)
-    log.Print("There was an issue durning finding an user")
     return err
   }
-  if user.Password == util.CreatePasswordHash(password) {
-    return nil
+  if user.Password != EncryptPassword(password) {
+    return errors.New("Provided password is not valid")
   }
-  return errors.New("Provided passowrd does not match the user")
+
+  return nil
 }
 
-func findUserByEmailNick(db *sql.DB, user User) (int, error) {
-  var id int
-  row := db.QueryRow(query.FindUserByEmailAndNickname, user.Email, user.Nickname)
-  err := row.Scan(&id)
-  if err != nil {
-    if err == sql.ErrNoRows {
-      return 0, nil
-    }
-    return 0, err
-  }
-  return id, nil
+func EncryptPassword(password string) string {
+  password += os.Getenv("SECRET")
+  hasher := sha512.New()
+  hasher.Write([]byte(password))
+  return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func validateUser(db *sql.DB, user User) (error) {
-  var foundId int
-  var err error
-  var match bool
+func validateUser(db *sql.DB, user User, update bool) error {
   if user.Email == "" {
-    return errors.New("User Email cannot be blank")
-  }
-  if user.Nickname == "" {
-    return errors.New("User Nickname cannot be blank")
+    return &UserError{ Err: errors.New("Email is required") }
   }
   if user.Password == "" {
-    return errors.New("User Password caonnot be blank")
+    return &UserError{ Err: errors.New("Password is required") }
   }
-  match, err =  regexp.MatchString(emailRegex, user.Email)
-  if err != nil || !match {
-    return errors.New("User Email value is not a vali Email")
+  if user.Nickname == "" {
+    return &UserError{ Err: errors.New("Nickname is required") }
   }
-  if len(user.Email) > 255 {
-    return errors.New("User Email cannot be longer than 255 characters")
+  
+  match, err := regexp.MatchString(emailRegex, user.Email)
+  if !match || err != nil {
+    return &UserError{ Err: errors.New("Email is not valid") }
   }
-
-  if len(user.Nickname) > 255 {
-    return errors.New("User Nickname cannot be longer than 255 characters")
+  if len(user.Password) < 8 {
+    return &UserError{ Err: errors.New("Password is to short") }
   }
-  if len(user.Password) < 4 {
-    return errors.New("User Password needs to be atleast 4 characters long")
-  }
-
-  foundId, err = findUserByEmailNick(db, user)
-  if err != nil {
-    return err
-  }
-  if foundId != 0 {
-    return errors.New("User with that credentials already exists")
+  if !update {
+    foundUser, err := findUserByEmailAndNickname(db, user.Email, user.Nickname)
+    if foundUser.ID != 0 {
+      return &UserError{ Err: errors.New("User with this Email or Nickname already exists") }
+    }
+    if err != nil && err != sql.ErrNoRows{
+      message := fmt.Sprintf("There was an issue with the database: %v", err.Error())
+      return &UserError{ Err: errors.New(message) }
+    }
   }
   return nil
+}
+
+func findUserByEmailAndNickname(db *sql.DB, email, nickname string) (User, error) {
+  var user User
+  row := db.QueryRow(query.FindUserByEmailAndNickname, email, nickname)
+  err := row.Scan(&user.ID, &user.Email, &user.Password, &user.Nickname, &user.CreatedAt, &user.UpdatedAt)
+  if err != nil {
+    return User{}, err
+  }
+  return user, nil
 }
