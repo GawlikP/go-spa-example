@@ -7,8 +7,9 @@ import (
 )
 
 func NewRouter(db *sql.DB) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/v1/health", handler.HealthHandler)
+  mux := http.NewServeMux()
+  mux.HandleFunc("GET /api/v1/health", handler.HealthHandler)
   mux.HandleFunc("POST /api/v1/register", handler.RegisterHandler(db))
-	return mux
+  mux.HandleFunc("POST /api/v1/login", handler.LoginHandler(db))
+  return mux
 }

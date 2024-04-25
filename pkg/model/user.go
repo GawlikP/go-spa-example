@@ -69,7 +69,7 @@ func CheckUserPassword(db *sql.DB, id int, password string) error {
     return err
   }
   if user.Password != EncryptPassword(password) {
-    return errors.New("Provided password is not valid")
+    return &UserError{ Err: errors.New("Provided password is not valid") }
   }
 
   return nil
@@ -82,17 +82,40 @@ func EncryptPassword(password string) string {
   return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func validateUser(db *sql.DB, user User, update bool) error {
-  if user.Email == "" {
-    return &UserError{ Err: errors.New("Email is required") }
+func FindUserByEmailAndPassword(db *sql.DB, email, password string) (User, error) {
+  var user User
+  row := db.QueryRow(query.FindUserByEmail, email)
+  err := row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password,&user.CreatedAt, &user.UpdatedAt)
+  if err != nil {
+    if errors.Is(err, sql.ErrNoRows) {
+      return User{}, &UserError{ Err: errors.New("Provided credentials are invalid") }
+    }
+    return User{}, err
   }
-  if user.Password == "" {
-    return &UserError{ Err: errors.New("Password is required") }
+  err = CheckUserPassword(db, user.ID, password)
+  if err != nil {
+    return User{}, err
+  }
+  return user, nil
+}
+
+func ValidateLoginCredentials(db *sql.DB, user User) (error) {
+  err := validateEmailPassword(user.Email, user.Password)
+  if err != nil {
+    return err
+  }
+  return nil
+}
+
+func validateUser(db *sql.DB, user User, update bool) error {
+  err := validateEmailPassword(user.Email, user.Password)
+  if err != nil {
+    return err
   }
   if user.Nickname == "" {
     return &UserError{ Err: errors.New("Nickname is required") }
   }
-  
+
   match, err := regexp.MatchString(emailRegex, user.Email)
   if !match || err != nil {
     return &UserError{ Err: errors.New("Email is not valid") }
@@ -109,6 +132,16 @@ func validateUser(db *sql.DB, user User, update bool) error {
       message := fmt.Sprintf("There was an issue with the database: %v", err.Error())
       return &UserError{ Err: errors.New(message) }
     }
+  }
+  return nil
+}
+
+func validateEmailPassword(email, password string) error {
+  if email == "" {
+    return &UserError{ Err: errors.New("Email is required") }
+  }
+  if password == "" {
+    return &UserError{ Err: errors.New("Password is required") }
   }
   return nil
 }

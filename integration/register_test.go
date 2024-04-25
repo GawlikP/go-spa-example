@@ -20,16 +20,16 @@ func TestRegisterHandler(t *testing.T) {
   db.MigrateUP(conn, "file://../migrations")
 
   t.Run("POST /api/v1/register Should return 201 with valid body", func(t *testing.T) {
-    invalidRequestBody := model.User{
+    validRequestBody := model.User{
       Email: "test@mail.com.com",
       Password: "password1234",
       Nickname: "nickname",
     }
-    jsonBody, err := json.Marshal(invalidRequestBody) 
+    jsonBody, err := json.Marshal(validRequestBody)
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusCreated {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusCreated)
     }
@@ -47,7 +47,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     resp := rr.Result()
     defer resp.Body.Close()
     err = json.NewDecoder(resp.Body).Decode(&returnedUser)
@@ -88,7 +88,7 @@ func TestRegisterHandler(t *testing.T) {
   t.Run("POST /api/v1/register should return 'Invalid empty payload' and 400 when request is an empty string", func(t *testing.T) {
     var errorResponse response.ErrorResponse
     invalidRequestBody := []byte("")
-    rr := requestWithBody(invalidRequestBody, conn, t)
+    rr := registerRequestWithBody(invalidRequestBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -99,7 +99,7 @@ func TestRegisterHandler(t *testing.T) {
   t.Run("POST /api/v1/register should return 'Invalid json body' and 400 when request is an empty string", func(t *testing.T) {
     var errorResponse response.ErrorResponse
     invalidRequestBody := []byte("{\"email\" : \"")
-    rr := requestWithBody(invalidRequestBody, conn, t)
+    rr := registerRequestWithBody(invalidRequestBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -118,7 +118,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -137,7 +137,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -156,7 +156,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -175,7 +175,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -195,7 +195,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -212,7 +212,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr = requestWithBody(jsonBody, conn, t)
+    rr = registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -231,7 +231,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr := requestWithBody(jsonBody, conn, t)
+    rr := registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -246,7 +246,7 @@ func TestRegisterHandler(t *testing.T) {
     if err != nil {
       t.Fatal(err)
     }
-    rr = requestWithBody(jsonBody, conn, t)
+    rr = registerRequestWithBody(jsonBody, conn, t)
     if status := rr.Code; status != http.StatusBadRequest {
       t.Errorf("Server returned wrong status code: got %v want %v", status, http.StatusBadRequest)
     }
@@ -265,7 +265,7 @@ func resultToErrorResponse(rr *httptest.ResponseRecorder, t *testing.T) response
   return e
 }
 
-func requestWithBody(body []byte, conn *sql.DB, t *testing.T) *httptest.ResponseRecorder {
+func registerRequestWithBody(body []byte, conn *sql.DB, t *testing.T) *httptest.ResponseRecorder {
   req, err := http.NewRequest("POST", "/api/v1/register", bytes.NewReader(body))
   if err != nil {
     t.Fatal(err)

@@ -24,3 +24,10 @@ const FindUser = `
   WHERE
   users.id = $1
 `
+
+const FindUserByEmail = `
+  SELECT *
+  FROM users
+  WHERE
+  users.email = $1
+`

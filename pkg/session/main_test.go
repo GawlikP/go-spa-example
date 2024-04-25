@@ -1,4 +1,4 @@
-package integration
+package session
 
 import (
   "testing"
@@ -10,7 +10,7 @@ import (
 
 func TestMain(m *testing.M) {
   log.SetOutput(io.Discard)
-  err := godotenv.Load("../.env")
+  err := godotenv.Load("../../.env")
   if err != nil {
     log.Fatal("Error loading .env file")
   }

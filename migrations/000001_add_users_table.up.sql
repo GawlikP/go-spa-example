@@ -6,5 +6,5 @@ CREATE TABLE users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX users_id_index ON users (id); 
-CREATE INDEX users_nickname_index ON users (nickname); 
+CREATE INDEX users_id_index ON users (id);
+CREATE INDEX users_nickname_index ON users (nickname);
