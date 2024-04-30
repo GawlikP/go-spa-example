@@ -14,12 +14,9 @@ func NewRouter(db *sql.DB) http.Handler {
   // ui
   staticFS, _ := fs.Sub(ui.StaticFiles, "dist")
   httpFS := http.FileServer(http.FS(staticFS))
-
   mux.HandleFunc("/", handler.IndexHandler)
   mux.Handle("/static/", httpFS)
-
-  mux.HandleFunc("GET /api/v1/health", handler.HealthHandler)
-  mux.HandleFunc("POST /api/v1/register", handler.RegisterHandler(db))
-  mux.HandleFunc("POST /api/v1/login", handler.LoginHandler(db))
+  // api
+  mux.Handle("/api/v1/", http.StripPrefix("/api/v1", ApiRouter(db)))
   return mux
 }

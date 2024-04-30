@@ -9,6 +9,10 @@ import (
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
   if r.Method != http.MethodGet {
+    if r.Method == http.MethodOptions {
+      w.WriteHeader(http.StatusNoContent)
+      return
+    }
     w.WriteHeader(http.StatusMethodNotAllowed)
     fmt.Fprintln(w, http.StatusText(http.StatusMethodNotAllowed))
     return
