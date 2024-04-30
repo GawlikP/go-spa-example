@@ -7,6 +7,8 @@ services:
     environment:
       - DB_HOST=db
       - DB_TEST_HOST=testdb
+      - SERVER_PORT=${SERVER_PORT}
+      - SERVER_HOST=${SERVER_HOST}
     tty: true
     build:
       context: .
