@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8 rounded-xl shadow-2xl shadow-rose-900  w-1/2 h-1/2 text-2xl">
+  <div class="p-8 rounded-xl shadow-2xl shadow-rose-500  w-1/2 h-1/2 text-2xl">
     <p class="text-center font-bold text-blue-100">
       Login Page
     </p>
@@ -20,6 +20,20 @@ export default {
       email: '',
       password: '',
       error: null,
+    }
+  },
+  beforeMount() {
+    if (this.$route.query.error) {
+      this.error = this.$route.query.error;
+    }
+  },
+  watch: {
+    '$route' (to, from) {
+      if(to !== from ) {
+        if (to.query.error) {
+          this.error = to.query.error;
+        }
+      }
     }
   },
   methods: {
