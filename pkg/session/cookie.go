@@ -58,12 +58,16 @@ func EncryptSessionWithAES(s SessionContent) (string, error) {
   return fmt.Sprintf("%x", ciphertext), nil
 }
 
-
-
 func DecryptSessionWithAES(s string) (SessionContent, error) {
   keyString := os.Getenv("COOKIE_SECRET")
-  enc, _ := hex.DecodeString(s)
-  key, _ := hex.DecodeString(keyString)
+  enc, err := hex.DecodeString(s)
+  if err != nil {
+    return SessionContent{}, err
+  }
+  key, err := hex.DecodeString(keyString)
+  if err != nil {
+    return SessionContent{}, err
+  }
   block, err := aes.NewCipher(key)
   if err != nil {
     return SessionContent{}, err

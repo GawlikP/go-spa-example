@@ -5,11 +5,11 @@ import (
   "os"
   "github.com/joho/godotenv"
   "log"
-  "io"
+  // "io"
 )
 
 func TestMain(m *testing.M) {
-  log.SetOutput(io.Discard)
+  // log.SetOutput(io.Discard)
   err := godotenv.Load("../.env")
   if err != nil {
     log.Fatal("Error loading .env file")
