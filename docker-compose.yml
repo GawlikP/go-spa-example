@@ -49,6 +49,7 @@ services:
       - PGPORT=${DB_TEST_PORT}
       - TEST_MODEL_DB=${TEST_MODEL_DB}
       - TEST_INTEGRATION_DB=${TEST_INTEGRATION_DB}
+      - TEST_MIDDLEWARE_DB=${TEST_MIDDLEWARE_DB}
     ports:
       - "${DB_TEST_PORT}:${DB_TEST_PORT}"
     volumes:
