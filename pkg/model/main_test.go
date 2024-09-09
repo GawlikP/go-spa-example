@@ -14,6 +14,6 @@ func TestMain(m *testing.M) {
   if err != nil {
     log.Fatal("Error loading .env file")
   }
-  m.Run()
-  os.Exit(0)
+  code := m.Run()
+  os.Exit(code)
 }

@@ -14,7 +14,7 @@ import (
   "github.com/GawlikP/go-spa-example/pkg/response"
 )
 
-func TestIntegration(t *testing.T) {
+func TestAuthorizeHandler(t *testing.T) {
   conn := db.CreateTestConnection(os.Getenv("TEST_INTEGRATION_DB"))
   defer conn.Close()
   db.MigrateUP(conn, "file://../migrations")

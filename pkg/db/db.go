@@ -42,7 +42,12 @@ func ClearTestDatabase(db *sql.DB) {
   if err != nil {
     log.Printf("Failed to ping the database: %v", err)
   }
-  db.Exec(query.ClearTestsDatabaseQuerry)
+  _, err = db.Exec(query.ClearTestsDatabaseQuerry)
+
+  if err != nil {
+    log.Printf("Failed to clear the database: %v", err)
+    log.Fatal("Failed to clear the database")
+  }
 }
 
 func connect(connectionString string) *sql.DB {

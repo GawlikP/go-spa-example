@@ -20,6 +20,15 @@ type User struct {
   UpdatedAt string `json:"updated_at"`
 }
 
+type SecureUser struct {
+  ID        int    `json:"id"`
+  Email     string `json:"email"`
+  Nickname  string `json:"nickname"`
+  CreatedAt string `json:"created_at"`
+  UpdatedAt string `json:"updated_at"`
+}
+
+
 type UserError struct {
   Err error
 }
@@ -56,6 +65,9 @@ func FindUser(db *sql.DB, id int) (User, error) {
   row := db.QueryRow(query.FindUser, id)
   err := row.Scan(&user.ID, &user.Email, &user.Nickname, &user.Password, &user.CreatedAt, &user.UpdatedAt)
   if err != nil {
+    if err == sql.ErrNoRows {
+      return User{}, &UserError{ Err: errors.New("User not found") }
+    }
     return User{}, err
   }
   return user, nil

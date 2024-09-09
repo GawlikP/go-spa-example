@@ -9,10 +9,13 @@
       Login!
     </button>
     <p class="text-red-500 mt-4" v-if="error">{{ error }}</p>
+    <p class="text-red-300 mt-4"> Don't have an Account? Register!</p>
+    <router-link to="/register" class="text-blue-300">Register</router-link>
   </div>
 </template>
 
 <script>
+import { RouterLink } from 'vue-router'
 export default {
   name: 'HelloComponent',
   data() {
@@ -34,6 +37,14 @@ export default {
           this.error = to.query.error;
         }
       }
+    }
+  },
+  computed: {
+    host() {
+      return serverHost;
+    },
+    port() {
+      return serverPort;
     }
   },
   methods: {

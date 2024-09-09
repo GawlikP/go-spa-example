@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../views/Login.vue';
 import Main from '../views/Main.vue';
+import Register from '../views/Register.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/main',
       name: 'main',
       component: Main
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: Register
     }
   ]
 });
@@ -27,6 +33,9 @@ async function authorize() {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
+      credentials: 'include',
+      cors: true,
+      cache: 'no-cache',
     });
     if (response.status != 200) {
       throw new Error('Session Expired');
@@ -40,7 +49,7 @@ async function authorize() {
 }
 
 router.beforeEach(async (to, from, next) => {
-  if (to.name !== 'login') {
+  if (to.name !== 'login' && to.name !== 'register') {
     const route = await authorize();
     if (route) {
       next(route);
